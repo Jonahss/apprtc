@@ -118,20 +118,12 @@ var AppController = function(loadingParams) {
             this.loadingParams_.roomId + '"';
       }
       var confirmJoinDiv = $(UI_CONSTANTS.confirmJoinDiv);
-      this.show_(confirmJoinDiv);
 
-      $(UI_CONSTANTS.confirmJoinButton).onclick = function() {
-        this.hide_(confirmJoinDiv);
+      // Record this room in the recently used list.
+      var recentlyUsedList = new RoomSelection.RecentlyUsedList();
+      recentlyUsedList.pushRecentRoom(this.loadingParams_.roomId);
+      this.finishCallSetup_(this.loadingParams_.roomId);
 
-        // Record this room in the recently used list.
-        var recentlyUsedList = new RoomSelection.RecentlyUsedList();
-        recentlyUsedList.pushRecentRoom(this.loadingParams_.roomId);
-        this.finishCallSetup_(this.loadingParams_.roomId);
-      }.bind(this);
-
-      if (this.loadingParams_.bypassJoinConfirmation) {
-        $(UI_CONSTANTS.confirmJoinButton).onclick();
-      }
     } else {
       // Display the room selection UI.
       this.showRoomSelection_();
@@ -199,9 +191,6 @@ AppController.prototype.finishCallSetup_ = function(roomId) {
   window.onmousemove = this.showIcons_.bind(this);
 
   $(UI_CONSTANTS.muteAudioSvg).onclick = this.toggleAudioMute_.bind(this);
-  $(UI_CONSTANTS.muteVideoSvg).onclick = this.toggleVideoMute_.bind(this);
-  $(UI_CONSTANTS.fullscreenSvg).onclick = this.toggleFullScreen_.bind(this);
-  $(UI_CONSTANTS.hangupSvg).onclick = this.hangup_.bind(this);
 
   setUpFullScreen();
 
@@ -309,13 +298,8 @@ AppController.prototype.transitionToActive_ = function() {
   trace('Call setup time: ' + (connectTime - this.call_.startTime).toFixed(0) +
       'ms.');
 
-  // Prepare the remote video and PIP elements.
-  trace('reattachMediaStream: ' + this.localVideo_.src);
-  reattachMediaStream(this.miniVideo_, this.localVideo_);
-
   // Transition opacity from 0 to 1 for the remote and mini videos.
   this.activate_(this.remoteVideo_);
-  this.activate_(this.miniVideo_);
   // Transition opacity from 1 to 0 for the local video.
   this.deactivate_(this.localVideo_);
   this.localVideo_.src = '';
@@ -349,7 +333,6 @@ AppController.prototype.transitionToWaiting_ = function() {
   this.activate_(this.localVideo_);
   // Transition opacity from 1 to 0 for the remote and mini videos.
   this.deactivate_(this.remoteVideo_);
-  this.deactivate_(this.miniVideo_);
 };
 
 AppController.prototype.transitionToDone_ = function() {
@@ -357,7 +340,6 @@ AppController.prototype.transitionToDone_ = function() {
   this.remoteVideo_.oncanplay = undefined;
   this.deactivate_(this.localVideo_);
   this.deactivate_(this.remoteVideo_);
-  this.deactivate_(this.miniVideo_);
   this.hide_(this.hangupSvg_);
   this.activate_(this.rejoinDiv_);
   this.show_(this.rejoinDiv_);
